@@ -48,7 +48,10 @@ sub imager_to_packet($self, $image) {
     for my $c (split //, $packet_body) {
         $checksum += ord($c);
     }
+    $checksum = ~$checksum & 0xFF;
 
+    $packet_body = sprintf "\x02%s%02x", $packet_body, $checksum;
+    return $packet_body;
 }
 
 sub write_frame($self) {

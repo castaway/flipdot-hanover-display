@@ -8,6 +8,7 @@ use Imager::Font;
 use Getopt::Long;
 use IO::Async::Loop;
 use IO::Async::Timer::Periodic;
+use feature 'say';
     
 use lib 'lib/';
 use FlipDot::Hanover::Display;
@@ -41,6 +42,7 @@ $loop->add(
                 localtime(time());
             my $t_string = sprintf("%2d:%2d:%2d",
                                    $hour, $min, $sec);
+	    say "text: $t_string";
             # testing sizes!
             my $bbox =  $font->bounding_box(string => $t_string);
             print "BBox H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
@@ -51,7 +53,9 @@ $loop->add(
                 );
             # send image to display!
 	    my $packet = $display->imager_to_packet($image);
-	    
+	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
+	    $portfh->print($packet) or die "Couldn't write packet: $!";
+	    close $portfh or die "Couldn't close: $!";
         },
     )->start );
 $loop->run;
