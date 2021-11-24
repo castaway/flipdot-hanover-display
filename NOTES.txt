@@ -1,0 +1,2 @@
+Protocol description: https://github.com/hawkz/Hanover_Flipdot
+Fonts: https://int10h.org/oldschool-pc-fonts/fontlist/
