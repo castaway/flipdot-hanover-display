@@ -14,7 +14,7 @@ use FlipDot::Hanover::Display;
 
 my $rows = 7;
 my $cols = 32;
-my $address = 1;
+my $address = 5;
 my $font_file = '/mnt/shared/projects/flipdot/fonts/ttf - Ac (aspect-corrected)/AcPlus_IBM_MDA.ttf'; #8x14
 
 GetOptions('rows=i' => \$rows,
@@ -50,8 +50,8 @@ $loop->add(
                            font   => $font,
                 );
             # send image to display!
-            # $display->imager_to_packet($image);
-                           
+	    my $packet = $display->imager_to_packet($image);
+	    
         },
     )->start );
 $loop->run;

@@ -1,5 +1,6 @@
-package FlipDot::Hanover::Display;
+package FlipDot::Hannover::Display;
 use strictures 2;
+no warnings 'experimental';
 use feature 'signatures';
 use POSIX 'ceil', 'floor';
 use Moo;
