@@ -24,9 +24,9 @@ GetOptions('rows=i' => \$rows,
            'font:s' => \$font_file,
     ) or die "Missing command line args\n";
 
-my $display = FlipDot::Hannover::Display->new(width => $cols,
-                                              height => $rows,
-                                              address => $address);
+my $display = FlipDot::Hanover::Display->new(width => $cols,
+					     height => $rows,
+					     address => $address);
 my $font = Imager::Font->new(
     file => $font_file,
     color => 'white',
@@ -54,6 +54,11 @@ $loop->add(
             # send image to display!
 	    my $packet = $display->imager_to_packet($image);
 	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
+	    my $termios = POSIX::Termios->new;
+	    $termios->getattr($portfh->fileno);
+	    $termios->setispeed(POSIX::B4800());
+	    $termios->setospeed(POSIX::B4800());
+	    $termios->setattr($portfh->fileno, POSIX::TCSANOW());
 	    $portfh->print($packet) or die "Couldn't write packet: $!";
 	    close $portfh or die "Couldn't close: $!";
         },

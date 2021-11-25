@@ -1,4 +1,4 @@
-package FlipDot::Hannover::Display;
+package FlipDot::Hanover::Display;
 use strictures 2;
 no warnings 'experimental';
 use feature 'signatures';
@@ -48,7 +48,8 @@ sub imager_to_packet($self, $image) {
     for my $c (split //, $packet_body) {
         $checksum += ord($c);
     }
-    $checksum = ~$checksum & 0xFF;
+    $checksum &= 0xFF;
+    $checksum = ($checksum ^ 0xFF) - 1;
 
     $packet_body = sprintf "\x02%s%02x", $packet_body, $checksum;
     return $packet_body;
