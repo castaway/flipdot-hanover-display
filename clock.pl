@@ -40,17 +40,19 @@ $loop->add(
         on_tick => sub {
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
                 localtime(time());
-            my $t_string = sprintf("%2d:%2d:%2d",
+            my $t_string = sprintf("%02d:%02d:%02d",
                                    $hour, $min, $sec);
 	    say "text: $t_string";
             # testing sizes!
             my $bbox =  $font->bounding_box(string => $t_string);
-            print "BBox H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
+            print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
             my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
-            $image->string(x=>0,y=>1,
+            $image->string(x=>0,y=>$rows,
                            string => $t_string,
                            font   => $font,
                 );
+            # $t_string =~ s/:/_/g;
+            # $image->write(file=>"./$t_string.png") or die $image->errstr;
             # send image to display!
 	    my $packet = $display->imager_to_packet($image);
 	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
