@@ -30,31 +30,20 @@ my $display = FlipDot::Hanover::Display->new(width => $cols,
 my $font = Imager::Font->new(
     file => $font_file,
     color => 'white',
-    size => 8,
+    size => 10,
     );
 
 my $loop = IO::Async::Loop->new();
-
 $loop->add(
     IO::Async::Timer::Periodic->new(
         interval => 1,
         on_tick => sub {
-            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-                localtime(time());
-            my $t_string = sprintf("%02d:%02d:%02d",
-                                   $hour, $min, $sec);
-	    say "text: $t_string";
-            # testing sizes!
-            my $bbox =  $font->bounding_box(string => $t_string);
-            print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
             my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
-            $image->string(x=>0,y=>$rows,
-                           string => $t_string,
-                           font   => $font,
-                );
-            # $t_string =~ s/:/_/g;
-            # $image->write(file=>"./$t_string.png") or die $image->errstr;
-            # send image to display!
+	    for my $x (1,2,3) {
+		for my $y (4,5,6) {
+		    $image->setpixel(x=>$x, y=>$y);
+		}
+	    }
 	    my $packet = $display->imager_to_packet($image);
 	    say $packet;
 	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
@@ -65,6 +54,8 @@ $loop->add(
 	    $termios->setattr($portfh->fileno, POSIX::TCSANOW());
 	    $portfh->print($packet) or die "Couldn't write packet: $!";
 	    close $portfh or die "Couldn't close: $!";
+
+	    exit;
         },
     )->start );
 $loop->run;
