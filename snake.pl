@@ -70,12 +70,6 @@ my $stream =
         write_handle => $portfh,
         read_len => 1,
 #        autoflush => 1,
-	write_all => 1,
-	# on_outgoing_empty, on_writeable_start
-	on_write_ready => sub {
-	    print "Writeable\n";
-	    draw_snake();
-	},
         on_read => sub {
             my ($self, $buffref, $eof) = @_;
             while( $$buffref =~ s/^(.)// ) {
@@ -83,20 +77,20 @@ my $stream =
             # while( sysread(\*STDIN, $input, 1) ) {
                 print "Received input: $input\n";
                 if($input eq q{'} or
-		   $input eq 'w') {
+                   $input eq 'w') {
                     # turn up
                     $dir = 'y+';
                 } elsif($input eq '/' or
-			$input eq 's') {
+                        $input eq 's') {
                     # turn down
                     $dir = 'y-';
                 } elsif($input eq 'z' or
-			$input eq 'a'
-		    ) {
+                        $input eq 'a'
+                    ) {
                     # turn left
                     $dir = 'x-';
                 } elsif($input eq 'x' or
-		        $input eq 'd') {
+                        $input eq 'd') {
                     # turn right
                     $dir = 'x+';
                 }
@@ -105,8 +99,6 @@ my $stream =
         }
     );
 ReadMode 3;
-#draw_snake();
-draw_dots();
 
 $loop->add($stream);
 
@@ -129,7 +121,10 @@ $loop->add(
     )->start
 );
 
+draw_snake();
+draw_dots();
 $loop->run;
+
 # close $portfh or die "Couldn't close: $!";
 
 sub draw_dots {
@@ -171,9 +166,10 @@ sub draw_snake {
                  x1=> $snakeX, x2 => $snakeX2,
                  y1=> $snakeY, y2 => $snakeY2);
     my $packet = $display->imager_to_packet($image);
-    #            say $packet;
-    #my ($port) = grep { ref $_ eq 'IO::Async::Stream' } ($loop->notifiers());
-    $stream->write($packet) or die "Couldn't write packet: $!";
-    #print $portfh $packet;
+    # say $packet;
+    # print $portfh $packet  or die "Couldn't write packet: $!";
+
+    my $future = $stream->write($packet);
+    await $future->then( sub { draw_snake(); });
 }
     
