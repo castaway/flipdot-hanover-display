@@ -16,13 +16,13 @@ use lib 'lib/';
 use FlipDot::Hanover::Display;
 
 # small display
-# my $rows = 7;
-# my $cols = 84;
-# my $address = 5;
+my $rows = 7;
+my $cols = 84;
+my $address = 5;
 # big display
-my $rows = 16;
-my $cols = 96;
-my $address = 3;
+#my $rows = 16;
+#my $cols = 96;
+#my $address = 3;
 my $font_file = '/mnt/shared/projects/flipdot/fonts/ttf - Ac (aspect-corrected)/AcPlus_IBM_MDA.ttf'; #8x14
 
 GetOptions('rows=i' => \$rows,
@@ -39,16 +39,39 @@ my @formats = (
     #{ type=>'cldr', format=>'yyyy-MM-dd hh:mm:ss'},
     #{ type=>'cldr', format=>'d MMMM yyyy GGGG'},
     #{ type=>'cldr', format=>'MMMM d yyyy GGGG'},
-    { type=>'framerate'},
+    #{ type=>'framerate'},
+    { type => 'cldr', format=>'HH:MM:ss' },
+    
 );
 
-my @fonts = map {my $f=Imager::Font->new(file => $_,
-					 color => 'white',
-					 size => 16);
-		 print "cannot load font $_\n";
-		 $f ? $f : ()
+sub load_font {
+    my $path = shift;
+    
+    my $f=Imager::Font->new(file => $_,
+			    color => 'white',
+			    size => 16);
+    return if not $f;
+    my $bbox =  $f->bounding_box(string => '1234567890:');
+    my $bbox_height = $bbox->text_height;
+    my $right_size = $bbox_height / 16 * $rows+2;
+    $right_size = sprintf('%.0f', $right_size);
+    
+    say "font $path, bbox height $bbox_height, right_size=$right_size";
+    
+    $f=Imager::Font->new(file => $_,
+			 color => 'white',
+			 size => $right_size);
+    
+    $bbox =  $f->bounding_box(string => '1234567890:');
+    $bbox_height = $bbox->text_height;
+    say "after adjustment, $bbox_height";
+			 
+    return $f;
 }
-glob 'fonts/ttf\ -\ Ac*/*.ttf';
+
+my @fonts = map {load_font($_)}
+grep {1}
+glob 'fonts/ttf\ -\ Ac*/*';
 
 print "loaded ".@fonts." fonts\n";
 
@@ -80,17 +103,18 @@ my $loop = IO::Async::Loop->new();
 
 $loop->add(
     IO::Async::Timer::Periodic->new(
-        interval => 0.001,
+        interval => 1,
         on_tick => sub {
             $frames++;
-        my $format = $formats[rand @formats];
-        my $now = DateTime->now;
-        my $t_string = do_format($now, $format);
-
+	    my $format = $formats[rand @formats];
+	    my $now = DateTime->now;
+	    my $t_string = do_format($now, $format);
+	    
 	    say "text: $t_string";
             # testing sizes!
-	    my $font = $fonts[0]; # $fonts[rand @fonts];
-            #my $bbox =  $font->bounding_box(string => $t_string);
+	    my $font = $fonts[4];
+	    #my $font = $fonts[rand @fonts];
+            my $bbox =  $font->bounding_box(string => $t_string);
             #print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
             my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
             $image->string(x=>0,y=>$rows,

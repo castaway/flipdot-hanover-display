@@ -20,13 +20,13 @@ use lib 'lib/';
 use FlipDot::Hanover::Display;
 
 # small display
-# my $rows = 7;
-# my $cols = 84;
-# my $address = 5;
+my $rows = 7;
+my $cols = 84;
+my $address = 5;
 # big display
-my $rows = 16;
-my $cols = 96;
-my $address = 3;
+# my $rows = 16;
+# my $cols = 96;
+# my $address = 3;
 my $font_file = '/mnt/shared/projects/flipdot/fonts/ttf - Ac (aspect-corrected)/AcPlus_IBM_MDA.ttf'; #8x14
 
 GetOptions('rows=i' => \$rows,
@@ -70,7 +70,9 @@ my $stream =
         write_handle => $portfh,
         on_read => sub {
             return 0;
-        }
+        },
+        # Attempt to write everything in one call to the kernel write().
+        # write_all => 1,
     );
 
 async sub reader {
@@ -85,6 +87,10 @@ async sub writer {
     while (1) {
         my $packet = draw_display();
         await $stream->write($packet);
+        my $fh = $stream->write_handle;
+        # Really, really write right now.
+        # $fh->flush;
+        # $fh->sync;
     }
 }
 
