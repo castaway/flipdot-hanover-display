@@ -7,6 +7,7 @@ use Moo;
 
 has 'width', is => 'rw';
 has 'height', is => 'rw';
+has 'upside_down', is => 'rw';
 
 =item address
 
@@ -21,6 +22,10 @@ sub imager_to_packet($self, $image) {
         make_colors => 'mono',
         translate => 'errdiff'
     });
+
+    if ($self->upside_down) {
+        $image->flip(dir => 'vh');
+    }
 
     if ($image->getwidth != $self->width) {
         die sprintf("Passed image is wrong width (passed %d, expected %d)", $image->getwidth, $self->width);

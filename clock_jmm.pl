@@ -40,8 +40,8 @@ my @formats = (
     #{ type=>'cldr', format=>'d MMMM yyyy GGGG'},
     #{ type=>'cldr', format=>'MMMM d yyyy GGGG'},
     #{ type=>'framerate'},
-    { type => 'cldr', format=>'HH:MM:ss' },
-    
+    #{ type => 'cldr', format=>'HH:MM:ss' },
+    { type => 'countdown', until=>DateTime->new(year => '2022', time_zone => 'Europe/London'), when => sub { return $_[0]->is_positive; }, end_text => 'HAPPY NEW YEAR!'},
 );
 
 sub load_font {
@@ -89,6 +89,55 @@ sub do_format {
         my $etime = time() - $start_time;
         my $fps = $frames/$etime;
         return $fps . " fps";
+    } elsif ($format->{type} eq 'countdown') {
+        my $duration = DateTime->now->subtract_datetime($format->{until});
+	my $text = '';
+	if (exists $format->{when} && $format->{when}->($duration)) {
+	    $text = $format->{end_text};
+        } else {
+	    $text = "T";
+	    if ($duration->is_positive) {
+		$text .= "+";
+	    } else {
+		$text .= "-";
+	    }
+        
+	    my %show;
+	    if ($duration->days() != 0) {
+		$show{d} = 1;
+		$show{h} = 1;
+		$show{m} = 1;
+		$show{s} = 1;
+	    } elsif ($duration->hours() != 0) {
+		$show{h} = 1;
+		$show{m} = 1;
+		$show{s} = 1;
+	    } elsif ($duration->minutes() != 0) {
+		$show{m} = 1;
+		$show{fs} = 1;
+	    } else {
+		$show{fs} = 1;
+	    }
+
+	    if ($show{d}) {
+		$text .= sprintf "%dd", $duration->days();
+	    }
+	    if ($show{h}) {
+		$text .= sprintf "%dh", $duration->hours();
+	    }
+	    if ($show{m}) {
+		$text .= sprintf "%dm", $duration->minutes();
+	    }
+	    if ($show{s}) {
+		$text .= sprintf "%ds", $duration->seconds();
+	    }
+	    if ($show{fs}) {
+		$text .= sprintf "%02.4fs", $duration->seconds() + $duration->nanoseconds()  * 1e-9;
+	    }
+	}
+
+        return $text;
+
     } else {
         return $format->{type} . " not known";
     }
@@ -97,13 +146,14 @@ sub do_format {
 my $display = FlipDot::Hanover::Display->new(
     width => $cols,
     height => $rows,
-    address => $address);
+    address => $address,
+    upside_down => 0);
 
 my $loop = IO::Async::Loop->new();
 
 $loop->add(
     IO::Async::Timer::Periodic->new(
-        interval => 1,
+        interval => 0.01,
         on_tick => sub {
             $frames++;
 	    my $format = $formats[rand @formats];
