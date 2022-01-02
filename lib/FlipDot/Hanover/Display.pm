@@ -3,10 +3,12 @@ use strictures 2;
 no warnings 'experimental';
 use feature 'signatures';
 use POSIX 'ceil', 'floor';
+use Time::HiRes 'sleep';
 use Moo;
 
-has 'width', is => 'rw';
-has 'height', is => 'rw';
+has 'display', is => 'rw'; # '7x84x5'
+has 'width', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[1]; };
+has 'height', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[0]; };
 has 'upside_down', is => 'rw';
 
 =item address
@@ -15,7 +17,7 @@ C<address> should be the value printed on the dial-switch on the main board in t
 
 =cut
 
-has 'address', is => 'rw';;
+has 'address', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[2]; };
 
 sub imager_to_packet($self, $image) {
     $image = $image->to_paletted({
@@ -81,8 +83,34 @@ sub imager_to_packet($self, $image) {
     return $packet_body;
 }
 
-sub write_frame($self) {
-    
+sub send_image ($self, $image) {
+    if ($image->getwidth > $self->width) {
+	for(my $i = 0; $i < $image->getwidth - $self->width; $i++) {
+	    my $subimage = $image->crop(left  => $i,
+					top   => 0,
+					width => $self->width);
+	    
+	    my $packet = $self->imager_to_packet($subimage);
+	    print "$i = $packet\n";
+	    $self->write_frame($packet);
+	    sleep 0.5;
+	}
+    } else {
+	my $packet = $self->imager_to_packet($image);
+	$self->write_frame($packet);
+    }
+
+}
+
+sub write_frame($self, $packet) {
+    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
+    my $termios = POSIX::Termios->new;
+    $termios->getattr($portfh->fileno);
+    $termios->setispeed(POSIX::B4800());
+    $termios->setospeed(POSIX::B4800());
+    $termios->setattr($portfh->fileno, POSIX::TCSANOW());
+    $portfh->print($packet) or die "Couldn't write packet: $!";
+    close $portfh or die "Couldn't close: $!";
 }
 
 1;

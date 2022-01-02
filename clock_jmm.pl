@@ -42,6 +42,7 @@ my @formats = (
     #{ type=>'framerate'},
     #{ type => 'cldr', format=>'HH:MM:ss' },
     { type => 'countdown', until=>DateTime->new(year => '2022', time_zone => 'Europe/London'), when => sub { return $_[0]->is_positive; }, end_text => 'HAPPY NEW YEAR!'},
+    #{ type => 'text', value => 'HAPPY NEW YEAR', } #longer than display
 );
 
 sub load_font {
@@ -144,16 +145,16 @@ sub do_format {
 }
 
 my $display = FlipDot::Hanover::Display->new(
-    width => $cols,
-    height => $rows,
-    address => $address,
+    display => '7x84x5',
+#    display => '16x96x3',
     upside_down => 0);
+
 
 my $loop = IO::Async::Loop->new();
 
 $loop->add(
     IO::Async::Timer::Periodic->new(
-        interval => 0.01,
+        interval => 5,
         on_tick => sub {
             $frames++;
 	    my $format = $formats[rand @formats];
@@ -165,8 +166,9 @@ $loop->add(
 	    my $font = $fonts[4];
 	    #my $font = $fonts[rand @fonts];
             my $bbox =  $font->bounding_box(string => $t_string);
-            #print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
-            my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
+            print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
+            # my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
+            my $image = Imager->new(xsize => $bbox->display_width, ysize => $rows, channels => 1);
             $image->string(x=>0,y=>$rows,
                            string => $t_string,
                            font   => $font,
@@ -174,16 +176,9 @@ $loop->add(
             # $t_string =~ s/:/_/g;
             # $image->write(file=>"./$t_string.png") or die $image->errstr;
             # send image to display!
-	    my $packet = $display->imager_to_packet($image);
-	    say $packet;
-	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
-	    my $termios = POSIX::Termios->new;
-	    $termios->getattr($portfh->fileno);
-	    $termios->setispeed(POSIX::B4800());
-	    $termios->setospeed(POSIX::B4800());
-	    $termios->setattr($portfh->fileno, POSIX::TCSANOW());
-	    $portfh->print($packet) or die "Couldn't write packet: $!";
-	    close $portfh or die "Couldn't close: $!";
+	    $display->send_image($image);
+	    #my $packet = $display->imager_to_packet($image);
+	    #say $packet;
         },
     )->start );
 $loop->run;
