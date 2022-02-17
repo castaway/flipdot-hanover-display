@@ -29,9 +29,9 @@ sub imager_to_packet($self, $image) {
         $image->flip(dir => 'vh');
     }
 
-    if ($image->getwidth != $self->width) {
-        die sprintf("Passed image is wrong width (passed %d, expected %d)", $image->getwidth, $self->width);
-    }
+#    if ($image->getwidth != $self->width) {
+#        die sprintf("Passed image is wrong width (passed %d, expected %d)", $image->getwidth, $self->width);
+#    }
 
     if ($image->getheight != $self->height) {
         die sprintf("Passed image is wrong height (passed %d, expected %d)", $image->getheight, $self->height);
@@ -40,7 +40,7 @@ sub imager_to_packet($self, $image) {
 
     # effectively pad on the bottom such that every column starts on an even byte boundry.
     my $bits_height = 8*ceil($self->height / 8);
-    my $data_length_bits = $self->width * $bits_height;
+    my $data_length_bits = $image->getwidth * $bits_height;
     my $data_length_bytes = $data_length_bits / 8;
 
     #print "bits height: $bits_height\n";
@@ -48,7 +48,7 @@ sub imager_to_packet($self, $image) {
     # fixme: this is horribly inefficent, but profile, or at least see how many fps we actually pump out, before we worry about it too much.
     my $data;
     my $white = Imager::Color->new('white');
-    for my $x (0..$self->width-1) {
+    for my $x (0..$image->getwidth-1) {
         for my $y (0..$self->height-1) {
 	    my ($pixel) = $image->getpixel(x=>$x, y=>$y)->equals(other=>$white) ? 1 : 0;
 	    my $linear = $x * $bits_height + $y;
