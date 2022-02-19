@@ -6,3 +6,6 @@ requires 'strictures';
 requires 'DateTime';
 requires 'Term::ReadKey';
 requires 'Future::AsyncAwait';
+requires 'Mojolicious::Lite';
+requires 'Path::Class';
+requires 'Regexp::Common::profanity';

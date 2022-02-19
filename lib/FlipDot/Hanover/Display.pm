@@ -6,9 +6,23 @@ use POSIX 'ceil', 'floor';
 use Time::HiRes 'sleep';
 use Moo;
 
+=item display
+
+Shortcut for setting width, height, and address in one short string.  Should be WIDTHxHEIGHTxADDRESS, where
+each of those is a decimal integer.  The note under address below applies.
+
+=cut
+
 has 'display', is => 'rw'; # '7x84x5'
 has 'width', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[1]; };
 has 'height', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[0]; };
+
+=item upside_down
+
+Set this to a true value if your display is mounted upside-down and you need to correct for that.
+
+=cut
+
 has 'upside_down', is => 'rw';
 
 =item address
@@ -72,14 +86,6 @@ sub imager_to_packet($self, $image) {
 
     $packet_body = sprintf "\x02%s%02X", $packet_body, $checksum;
 
-    #my $extra_hexy = $packet_body;
-    #$extra_hexy =~ s/(.)/sprintf "%02X", ord $1/eg;
-    #print "full packet, extra hexy: $extra_hexy\n";
-
-    # node/working: 0231363534303037303730373030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030033938
-    # ours/broken:  0231363534303037303730373030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030033936
-
-    
     return $packet_body;
 }
 
