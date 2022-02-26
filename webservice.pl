@@ -12,7 +12,7 @@ my $default_font = 'Ac437_ApricotPortable.ttf';
 get '/' => sub ($c) {
     my @fonts = map {
         { long => $_, file => file($_)->basename }
-    } grep {1} glob '../fonts/ttf\ -\ Ac*/*';
+    } grep {1} glob 'fonts/ttf\ -\ Ac*/*';
     $c->stash(inverted => $c->param('inverted') || 0);
     $c->stash(pfont => $c->param('pfont') || $default_font);
     $c->render(template => 'index', fonts => \@fonts);
@@ -34,7 +34,7 @@ post '/update' => sub ($c) {
     my $str = $c->param('updateString') || '<empty>';
     $str =~ s/($RE{profanity})/'X' x length($1)/ge;
     # move previous image into archive dir?
-    my $fontfile = $c->param('font') || '../fonts/ttf - Ac (aspect-corrected)/' . $default_font;
+    my $fontfile = $c->param('font') || 'fonts/ttf - Ac (aspect-corrected)/' . $default_font;
     my $font = Imager::Font->new(
         file  => $fontfile,
         color => 'white',
