@@ -9,3 +9,6 @@ requires 'Future::AsyncAwait';
 requires 'Mojolicious::Lite';
 requires 'Path::Class';
 requires 'Regexp::Common::profanity';
+requires 'DBIx::Class'; # inc SQLite
+requires 'DBIx::Class::TimeStamp';
+requires 'SQL::Translator';

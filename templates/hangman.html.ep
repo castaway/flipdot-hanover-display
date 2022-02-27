@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <title>Hangman</title>
+  </head>
+  <body>
+    <h1>Hangman Game</h1>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    <img src="/flipdot/hangman/status"/>
+<!--    <img src="<%= url_for('hangman/status')->to_abs %>"/> -->
+
+    <hr/>
+    <% if($game) {%>
+    <h3>Guessed Letters: <%== join(', ', @$letters) %></h3>
+    <% } elsif($finished_word) { %>
+    <h3>Last word was: <%= $finished_word %></h3>
+    <% } %>
+    
+    <form method="post" action="/flipdot/hangman/guess">
+      <div class="mb-3">
+        <input type="radio" class="form-check-input" name="startNew" id="startNewYes" aria-describedby="startNewHelp" value="1" <%= $newuser ?  'checked' : ''%> />
+        <label for="startNewYes" class="form-check-label">Start New Game?</label>
+        <input type="radio" class="form-check-input" name="startNew" id="startNewNo" aria-describedby="startNewHelp" value="0" <%= $game ? 'checked' : '' %> <%= !$game ? 'disabled' : '' %> />
+        <label for="startNewNo" class="form-check-label">Play Current Game</label>
+        <div id="startNewHelp" class="form-text">Start a fresh game, or continue the running one</div>
+      </div>
+      <div class="mb-3">
+        <label for="inputLetter" class="form-label">Guess</label>
+        <input type="text" name="guess" minlength="1" maxlength="1" required class="form-control" id="inputLetter" aria-describedby="letterHelp" autofocus>
+        <div id="letterHelp" class="form-text">Guess a letter</div>
+      </div>
+      <button type="submit" class="btn btn-primary">Guess</button>
+    </form>
+  </body>
+</html>

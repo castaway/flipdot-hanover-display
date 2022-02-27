@@ -24,7 +24,7 @@ my $address = 5;
 #my $cols = 96;
 #my $address = 3;
 
-my $filename = 'festival_display.png';
+my $filename = 'saywhat_display.png';
 
 GetOptions('rows=i' => \$rows,
            'cols=i' => \$cols,

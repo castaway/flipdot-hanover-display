@@ -1,2 +1,35 @@
 Protocol description: https://github.com/hawkz/Hanover_Flipdot
 Fonts: https://int10h.org/oldschool-pc-fonts/fontlist/
+
+word games:
+# sqlite? db ("wordgames.db"?)
+# import words from /etc/dictionaries-common/words - DONE?
+## remove entries that begin with a captital letter or contain a non-word char (eg ')
+## store in "words" (reduce by mix/max length of word too?)
+# User visits page, no cookies - pick random new word, assign unused player id 1-9, - DONE
+# (if out of players, delete oldest thats at least 4 hours old?) - DONE
+# create cookie, store word - display should show _ _ _ etc - DONE
+# hangman table: player_id, started_at, word - DONE
+# hangman_guesses: player_id, guess_at, letter - DONE
+# show user UI to enter a letter, append to table - DONE
+# display updates (aggregate letter guesses, find in word, output result) (in Result(Set) class) - DONE
+# if word complete, scroll to "Congrats, player XX" (enter in top score table?)
+# if out of guesses, scroll to "Better luck next time"
+# (either way delete cookies, player data) - DONE
+# else redisplay ui with input + list of used letters - DONE
+
+## UI button for "display my state" in case multiple playing?
+## co-op mode, no player ids (or only one), everyone guesses letters for same word?
+## (join current game, start own game?)
+
+# wordle
+# no player = new word (only 5 letter ones!)
+# wordle : player_id, started_at, word
+# wordle_guesses: player_id, attempt_count, word
+# display outputs result of most recent guess!
+# _ = unknown / wrong
+# lower case = wrong place
+# upper case = correct?
+
+# jandj.me.uk/flipdotgames/XX (proxy to pi)
+
