@@ -11,6 +11,17 @@
     <title>Hangman</title>
   </head>
   <body>
+    <ul class="nav" role="navigation" >
+      <li class="nav-item">
+        <a class="nav-link" href="/flipdot">Games</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link disabled" href="/flipdot/hangman">Hangman</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/flipdot/hangman/history">Hangman History</a>
+      </li>
+    </ul>
     <h1>Hangman Game</h1>
 
     <!-- Optional JavaScript; choose one of the two! -->
@@ -18,20 +29,23 @@
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
-    <img src="/flipdot/hangman/status"/>
+    <% if($game->player_id != 1) { %>
+      <img src="/flipdot/hangman/status"/>
+    <% } else { %>
+      <a href="https://www.windowwanderland.com/event/eastcott-swindon-2022/">To play this game, visit 41 Radnor Street</a>. To play remotely choose "Start Offline Game"
+    <% } %>
 <!--    <img src="<%= url_for('hangman/status')->to_abs %>"/> -->
 
     <hr/>
-    <% if($game) {%>
-    <h3>Guessed Letters: <%== join(', ', @$letters) %></h3>
-    <% } elsif($finished_word) { %>
-    <h3>Last word was: <%= $finished_word %></h3>
+    <h4>Guessed Letters: <%== join(', ', @$letters) %></h4>
+    <% if($finished_word) { %>
+    <h4>Last word was: <%= $finished_word %></h4>
     <% } %>
     
     <form method="post" action="/flipdot/hangman/guess">
       <div class="mb-3">
         <input type="radio" class="form-check-input" name="startNew" id="startNewYes" aria-describedby="startNewHelp" value="1" <%= $newuser ?  'checked' : ''%> />
-        <label for="startNewYes" class="form-check-label">Start New Game?</label>
+        <label for="startNewYes" class="form-check-label">Start Offline Game?</label>
         <input type="radio" class="form-check-input" name="startNew" id="startNewNo" aria-describedby="startNewHelp" value="0" <%= $game ? 'checked' : '' %> <%= !$game ? 'disabled' : '' %> />
         <label for="startNewNo" class="form-check-label">Play Current Game</label>
         <div id="startNewHelp" class="form-text">Start a fresh game, or continue the running one</div>

@@ -4,6 +4,7 @@ use Mojolicious::Lite -signatures;
 use Imager;
 use Path::Class;
 use Regexp::Common 'profanity';
+use Data::Dumper;
 
 use lib 'lib/';
 use WordGames::Schema;
@@ -15,6 +16,10 @@ my $default_font = 'Ac437_ApricotPortable.ttf';
 my $dsn_wordgames = 'dbi:SQLite:dbname=wordgames.db';
 
 my $proxied = '/flipdot';
+
+get '/' => sub ($c) {
+    $c->render(template => 'index');
+};
 
 get '/saywhat' => sub ($c) {
     my @fonts = map {
@@ -54,21 +59,33 @@ get '/hangman' => sub ($c) {
     my $game;
     my $newuser = 0;
     my $ended_word;
-    if (!%$sess || !$sess->{player_id}) {
-        # new user (setup on submit, in case they choose to play the co-op)
-        $newuser = 1;
-    } else {
-        my $schema = WordGames::Schema->connect($dsn_wordgames);
-        $game = $schema->resultset('Hangman')->find({player_id => $sess->{player_id}});
-        ## Cleanup if this game is finished!
-        if ($game) {
-            my $done = $game->end_if_finished();
-            if($done) {
-                $ended_word = $game->word;
-                $game = undef;
+    ## just in case:
+    my $schema = WordGames::Schema->connect($dsn_wordgames);
+    $schema->txn_do(sub {
+        if($sess && $sess->{player_id}) {
+            $game = $schema->resultset('Hangman')->find({player_id => $sess->{player_id}});
+            ## Cleanup if this game is finished!
+            if ($game) {
+                my $done = $game->archive_if_finished();
+                if($done) {
+                    $ended_word = $game->word;
+                    $game = undef;
+                }
+            }
+            if (!$game) {
+                delete $c->session->{player_id};
             }
         }
-    }
+        $game ||= $schema->resultset('Hangman')->find({ player_id => 1});
+        if (!$game) {
+            # start new co-op
+            my $word = $schema->resultset('Word')->random_word();
+            ## This should be player 1!
+            $game = $schema->resultset('Hangman')->new_game($word, 1);
+        } 
+        $c->session->{player_id} = $game->player_id;
+    });
+
     my @letters = ();
     if ($game) {
         # List of guessed letters
@@ -84,7 +101,7 @@ get '/hangman' => sub ($c) {
 
 post '/hangman/guess' => sub ($c) {
     my $guess = lc $c->param('guess');
-    if (!$guess || length($guess) > 1) {
+    if (!$guess || length($guess) > 1 || $guess =~ /\W/) {
         return $c->redirect_to("$proxied/hangman");
     }
 
@@ -95,11 +112,8 @@ post '/hangman/guess' => sub ($c) {
     if ($c->param('startNew')) {
         # new player:
         my $word = $schema->resultset('Word')->random_word();
-        $game = $schema->resultset('Hangman')->new_player($word);
+        $game = $schema->resultset('Hangman')->new_game($word);
         print STDERR "Game: ", $game->player_id, "\n";
-    } elsif(!$sess->{player_id}) {
-        ## join existing one:
-        $game = $schema->resultset('Hangman')->find({ player_id => 1});
     } else {
         $game = $schema->resultset('Hangman')->find({ player_id => $sess->{player_id}});
     }
@@ -116,6 +130,7 @@ post '/hangman/guess' => sub ($c) {
 get 'hangman/status' => sub ($c) {
     my $sess = $c->session();
     my $game;
+#    print STDERR Dumper($sess);
     if (%$sess && $sess->{player_id}) {
         my $schema = WordGames::Schema->connect($dsn_wordgames);
         $game = $schema->resultset('Hangman')->find({player_id => $sess->{player_id}});
@@ -136,8 +151,19 @@ get 'hangman/status' => sub ($c) {
     $c->render(data => $file_data, format => 'png');
 };
 
+get '/hangman/history' => sub ($c) {
+    my $schema = WordGames::Schema->connect($dsn_wordgames);
+    my $archive = $schema->resultset('HangmanArchive')->search_rs(
+        {},
+        { order_by => { '-desc' => 'started_at' }}
+        );
+    $c->render(template => 'hangman_history',
+               games => $archive);
+};
+
 app->start;
 
+# Copied into F::H::D
 sub to_flipdot_image {
     my ($fontname, $str, $inverted) = @_;
 

@@ -4,6 +4,8 @@ no warnings 'experimental';
 use feature 'signatures';
 use POSIX 'ceil', 'floor';
 use Time::HiRes 'sleep';
+use Imager;
+use Imager::Font;
 use Moo;
 
 =item display
@@ -32,6 +34,14 @@ C<address> should be the value printed on the dial-switch on the main board in t
 =cut
 
 has 'address', is => 'rw', lazy => 1, default => sub { (split(/x/, $_[0]->display))[2]; };
+
+=item default_fault
+
+C<default_font> is the font to use to write text to an image, if not passed to L</text_to_image>.
+
+=cut
+
+has 'default_font', is => 'rw', lazy => 1, default => sub {'Ac437_ApricotPortable.ttf'; };
 
 sub imager_to_packet($self, $image) {
     $image = $image->to_paletted({
@@ -91,7 +101,7 @@ sub imager_to_packet($self, $image) {
 
 sub send_image ($self, $image) {
     if ($image->getwidth > $self->width) {
-	for(my $i = 0; $i < $image->getwidth - $self->width; $i++) {
+	for(my $i = 0; $i < $image->getwidth - $self->width; $i += 2) {
 	    my $subimage = $image->crop(left  => $i,
 					top   => 0,
 					width => $self->width);
@@ -99,7 +109,7 @@ sub send_image ($self, $image) {
 	    my $packet = $self->imager_to_packet($subimage);
 	    print "$i = $packet\n";
 	    $self->write_frame($packet);
-	    sleep 0.5;
+	    sleep 1;
 	}
     } else {
 	my $packet = $self->imager_to_packet($image);
@@ -119,4 +129,23 @@ sub write_frame($self, $packet) {
     close $portfh or die "Couldn't close: $!";
 }
 
+sub text_to_image {
+    my ($self, $fontname, $str, $inverted) = @_;
+
+    my $fontfile = $fontname || 'fonts/ttf - Ac (aspect-corrected)/' . $self->default_font;
+    my $font = Imager::Font->new(
+        file  => $fontfile,
+        color => 'white',
+        size  => 8);
+    my $bbox =  $font->bounding_box(string => $str);
+    my $image = Imager->new(xsize => $bbox->display_width, ysize => $self->height, channels => 1);
+    $image->string(x => 0, y => $self->height,
+                   string => $str,
+                   font => $font);
+
+    if ($inverted) {
+        $image->filter(type => 'hardinvert') or die "Cannot invert: ".$image->errstr;
+    }
+    return $image;
+}
 1;

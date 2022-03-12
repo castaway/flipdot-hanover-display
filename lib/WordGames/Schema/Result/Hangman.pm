@@ -34,7 +34,19 @@ guessed letter, and the time of the guess (for sorting).
 sub add_guess {
     my ($self, $guess) = @_;
 
-    $self->guesses->create({ letter => $guess });
+    $self->guesses->find_or_create({ letter => $guess });
+}
+
+sub latest_update {
+    my ($self) = @_;
+
+    my $latest = $self->guesses->search_rs({}, {
+	order_by => { '-desc', 'guess_at' },
+	rows => 1 })->first();
+    if($latest) {
+	return $latest->guess_at;
+    }
+    return $self->started_at();
 }
 
 =head2 game_state
@@ -59,10 +71,16 @@ sub game_state {
     return $string;
 }
 
-sub end_if_finished {
+sub archive_if_finished {
     my ($self) = @_;
 
     if ($self->game_state !~ /-/) {
+        $self->result_source->schema->resultset('HangmanArchive')->create({
+            word => $self->word,
+            started_at => $self->started_at,
+            ended_at => DateTime->now(),
+            guesses => $self->guesses_rs->count,
+        });
         $self->delete;
         return 1;
     }
