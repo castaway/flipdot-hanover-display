@@ -37,19 +37,26 @@ my $display = FlipDot::Hanover::Display->new(
 
 my $loop = IO::Async::Loop->new();
 
-my $invert = 0;
+my $n = 0;
+my $white = Imager->new(xsize => 96, ysize => 16, channels => 1);
+$white->box(color=>'white', filled => 1);
+my $black = Imager->new(xsize => 96, ysize => 16, channels => 1);
+$black->box(color=>'black', filled => 1);
 $loop->add(
     IO::Async::Timer::Periodic->new(
-        interval => 2,
+        interval => 1,
         on_tick => sub {
-            my $image = Imager->new(xsize => 96, ysize => 16, channels => 1);
-            if ($invert) {
-                $image->box(color => 'black', filled => 1);
+            my $image;
+            if (($n / 100) & 1) {
+                say "white";
+                $image = $white;
             } else {
-                $image->box(color => 'white', filled => 1);
+                say "black";
+                $image = $black;
             }
-            $invert = !$invert;
+            $n++;
 
+            say $n;
             $display->send_image($image);
         },
     )->start );
