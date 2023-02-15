@@ -40,8 +40,11 @@ my @formats = (
     #{ type=>'cldr', format=>'d MMMM yyyy GGGG'},
     #{ type=>'cldr', format=>'MMMM d yyyy GGGG'},
     #{ type=>'framerate'},
-    #{ type => 'cldr', format=>'HH:MM:ss' },
-    { type => 'countdown', until=>DateTime->new(year => '2022', time_zone => 'Europe/London'), when => sub { return $_[0]->is_positive; }, end_text => 'HAPPY NEW YEAR!'},
+    #{ type => 'cldr', format=>'HH:mm:ss' },
+    { type => 'countdown', until=>DateTime->new(year => '2022', month=>'2', day => 26, hour=>17, time_zone => 'Europe/London'),
+      #when => sub { return $_[0]->is_positive; },
+      #end_text => 'HAPPY NEW YEAR!'
+    },
     #{ type => 'text', value => 'HAPPY NEW YEAR', } #longer than display
 );
 
@@ -115,9 +118,9 @@ sub do_format {
 		$show{s} = 1;
 	    } elsif ($duration->minutes() != 0) {
 		$show{m} = 1;
-		$show{fs} = 1;
+		$show{s} = 1;
 	    } else {
-		$show{fs} = 1;
+		$show{s} = 1;
 	    }
 
 	    if ($show{d}) {
@@ -154,17 +157,17 @@ my $loop = IO::Async::Loop->new();
 
 $loop->add(
     IO::Async::Timer::Periodic->new(
-        interval => 5,
+        interval => 1,
         on_tick => sub {
             $frames++;
-	    my $format = $formats[rand @formats];
-	    my $now = DateTime->now;
-	    my $t_string = do_format($now, $format);
-	    
-	    say "text: $t_string";
+            my $format = $formats[rand @formats];
+            my $now = DateTime->now;
+            my $t_string = do_format($now, $format);
+            
+            say "text: $t_string";
             # testing sizes!
-	    my $font = $fonts[4];
-	    #my $font = $fonts[rand @fonts];
+            my $font = $fonts[4];
+            #my $font = $fonts[rand @fonts];
             my $bbox =  $font->bounding_box(string => $t_string);
             print "BBox $t_string H/W :", $bbox->text_height, "/", $bbox->display_width, "\n";
             # my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
