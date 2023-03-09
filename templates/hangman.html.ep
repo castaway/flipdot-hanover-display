@@ -31,8 +31,10 @@
 
     <% if($game->player_id != 1) { %>
       <img src="/flipdot/hangman/status"/>
-    <% } else { %>
+      <% } else { %>
+      <!--
       <a href="https://www.windowwanderland.com/event/eastcott-swindon-2022/">To play this game, visit 41 Radnor Street</a>. To play remotely choose "Start Offline Game"
+      -->
     <% } %>
 <!--    <img src="<%= url_for('hangman/status')->to_abs %>"/> -->
 
