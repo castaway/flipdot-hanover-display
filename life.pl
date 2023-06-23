@@ -44,12 +44,21 @@ my $loop = IO::Async::Loop->new();
 
 my $p = 0.25;
 my $gol = Game::Life->new([$rows, $cols]);
-for my $x (0..$cols) {
-    for my $y (0..$rows) {
-	if (rand() < $p) {
-	    $gol->set_point($x, $y);
+reset();
+
+my $seen = {};
+
+sub reset {
+	$seen = {};
+	for my $x (0..$cols) {
+		for my $y (0..$rows) {
+			if (rand() < $p) {
+				$gol->set_point($x, $y);
+			} else {
+				$gol->unset_point($x, $y);
+			}
+		}
 	}
-    }
 }
 
 $loop->add(
@@ -59,29 +68,34 @@ $loop->add(
             $frames++;
 	    
             my $image = Imager->new(xsize => $cols, ysize => $rows, channels => 1);
-	    my $golgrid = $gol->get_grid;
+			my $golgrid = $gol->get_grid;
 
-	    for my $x (0..$cols) {
-		for my $y (0..$rows) {
-		    if ($golgrid->[$x][$y]) {
-			$image->setpixel(x=>$x, y=>$y, color=>'white');
-		    }
-		}
-	    }
-	    $gol->process;
-		    
+			for my $x (0..$cols) {
+				for my $y (0..$rows) {
+					if ($golgrid->[$x][$y]) {
+					$image->setpixel(x=>$x, y=>$y, color=>'white');
+					}
+				}
+			}
+			$gol->process;
 
-	    
-	    my $packet = $display->imager_to_packet($image);
-	    say $packet;
-	    open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
-	    my $termios = POSIX::Termios->new;
-	    $termios->getattr($portfh->fileno);
-	    $termios->setispeed(POSIX::B4800());
-	    $termios->setospeed(POSIX::B4800());
-	    $termios->setattr($portfh->fileno, POSIX::TCSANOW());
-	    $portfh->print($packet) or die "Couldn't write packet: $!";
-	    close $portfh or die "Couldn't close: $!";
+			my $packet = $display->imager_to_packet($image);
+
+			my $repeated_count = $seen->{$packet}++;
+			if ($repeated_count > 5) {
+				reset();
+			}
+
+			say $packet;
+			open my $portfh, '>/dev/ttyUSB0' or die "can't open /dev/ttyUSB0: $!";
+			my $termios = POSIX::Termios->new;
+			$termios->getattr($portfh->fileno);
+			$termios->setispeed(POSIX::B4800());
+			$termios->setospeed(POSIX::B4800());
+			$termios->setattr($portfh->fileno, POSIX::TCSANOW());
+			$portfh->print($packet) or die "Couldn't write packet: $!";
+			close $portfh or die "Couldn't close: $!";
         },
-    )->start );
+    )->start 
+);
 $loop->run;
