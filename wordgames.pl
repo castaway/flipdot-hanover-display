@@ -50,9 +50,11 @@ $loop->add(
 		print "Current hangman: $game_state\n";
                 $image = $display->text_to_image('', $game_state, 0);
 	    }
-	    # print "Failed to get state\n";
-	    # print "Game: $game\n";
-	    # print "Last update: " . $game->latest_update, "\n";
+	    if(!$image) {
+	     # print "Failed to get state\n";
+	     # print "Game: $game\n";
+	     # print "Last update: " . $game->latest_update, "\n";
+	    }
             # } else {
             #     $image = Imager->new(xsize => 84, ysize => 7, channels => 1);
             #     $image->box(color => 'white', filled => 1);
